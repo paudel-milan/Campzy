@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
-import 'bottom_nav_bar.dart'; // Import the navigation bar
-import './Pages/home_screen.dart';
-import './Pages/communities_screen.dart';
-import './Pages/create_post_screen.dart';
-import './Pages/chat_screen.dart';
-import './Pages/profile_screen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:provider/provider.dart'; // Import provider
+import 'firebase_options.dart';
+import 'features/home/screens/home_screen.dart';
+import 'widgets/bottom_nav_bar.dart';
+import 'providers/post_provider.dart'; // Import your PostProvider
 
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-void main(){
-  runApp(MyApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (context) => PostProvider()), // Provide PostProvider
+      ],
+      child: const MyApp(),
+    ),
+  );
 }
+
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
@@ -21,41 +31,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: MainScreen(), // Start from MainScreen
+      home: HomeScreen(),
     );
   }
-}
-
-class MainScreen extends  StatefulWidget{
-  @override
-  _MainScreenState createState() => _MainScreenState();
-}
-
-class _MainScreenState extends State<MainScreen>{
-  int _selectedIndex=0;
-  final List<Widget> _pages=[
-    HomeScreen(),
-    CommunitiesScreen(),
-    CreatePostScreen(),
-    ChatScreen(),
-    ProfileScreen(),
-  ];
-
-  void _onItemTapped(int index){
-    setState(() {
-      _selectedIndex=index;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _pages,
-      ),
-      bottomNavigationBar: BottomNavBar(currentIndex: _selectedIndex, onTap: _onItemTapped,),
-    );
-  }
-
 }

@@ -21,7 +21,7 @@ class _BottomNavBarState extends State<BottomNavBar>{
         unselectedItemColor: Colors.grey,
         showSelectedLabels: true,
         items: [
-          BottomNavigationBarItem(icon: Icon(Icons.home),label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.home,),label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.groups),label: "Communities"),
           BottomNavigationBarItem(icon: Icon(Icons.add_circle,size: 35,),label: "Create"),
           BottomNavigationBarItem(icon: Icon(Icons.chat),label: "Chat"),

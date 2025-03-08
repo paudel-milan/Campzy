@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "139612602412",
+    "project_id": "campzy-ca5d3",
+    "storage_bucket": "campzy-ca5d3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:139612602412:android:90bd22ab9f5e5528ebd189",
+        "android_client_info": {
+          "package_name": "com.example.mad"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "139612602412-jpv9audplu2ecbqi4h5k9kto5pbk4lkr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAX73v4XR6yTssxZDUNmH7cgu6P7To2yTk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "139612602412-jpv9audplu2ecbqi4h5k9kto5pbk4lkr.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
