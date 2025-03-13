@@ -29,7 +29,7 @@ class PostCard extends StatelessWidget {
               ),
               SizedBox(width: 10),
               Text(
-                "User: ${post.authorId}",
+                post.authorId, // Use the author's name here
                 style: TextStyle(color: Colors.black, fontSize: 14),
               ),
               Spacer(),
