@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mad/features/Profile/profile_screen.dart';
 import 'package:mad/features/home/screens/search_screen.dart';
+import 'package:mad/features/home/screens/setting_screen.dart';
 import 'package:provider/provider.dart';
 import '/features/communities/communities_screen.dart';
 import '/widgets/bottom_nav_bar.dart';
@@ -44,6 +45,10 @@ class _HomeScreenState extends State<HomeScreen>{
               },
               icon: Icon(Icons.search)),
           IconButton(onPressed: (){}, icon: Icon(Icons.notifications)),
+          IconButton(
+            onPressed: (){
+              Navigator.push(context,MaterialPageRoute(builder: (context) => SettingScreen()));},
+            icon: Icon(Icons.menu)),
         ],
       ),
       body: IndexedStack(

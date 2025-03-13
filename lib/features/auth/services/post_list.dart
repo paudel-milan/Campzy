@@ -1,10 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../models/post_model.dart'; // Import PostModel
 
 class PostService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // ✅ Fetch posts with pagination (for better efficiency)
-  Future<List<DocumentSnapshot>> getPosts({DocumentSnapshot? lastDoc, int limit = 10}) async {
+  // ✅ Fetch posts with pagination and convert to PostModel
+  Future<List<PostModel>> getPosts({DocumentSnapshot? lastDoc, int limit = 10}) async {
     Query query = _firestore.collection('posts').orderBy('createdAt', descending: true).limit(limit);
 
     if (lastDoc != null) {
@@ -12,10 +13,12 @@ class PostService {
     }
 
     QuerySnapshot snapshot = await query.get();
-    return snapshot.docs;
+
+    // 🔹 Convert Firestore Documents into PostModel list
+    return snapshot.docs.map((doc) => PostModel.fromDocument(doc)).toList();
   }
 
-  // ✅ Create post method
+  // ✅ Create a new post
   Future<void> createPost({
     required String text,
     required String authorId,
@@ -25,8 +28,8 @@ class PostService {
       await _firestore.collection('posts').add({
         'authorId': authorId,
         'username': username,
-        'content': text, // 🔹 Changed from `description` to `content`
-        'createdAt': FieldValue.serverTimestamp(), // 🔹 Firestore timestamp
+        'content': text,
+        'createdAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {
       print("Error creating post: $e");

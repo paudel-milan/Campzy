@@ -1,20 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import '../../home/screens/home_screen.dart';
 import '../services/auth_service.dart';
-import 'signup_screen.dart';
-import 'forgot_password_screen.dart';
+import 'login_screen.dart';
 
-
-class LoginScreen extends StatefulWidget {
+class SignupScreen extends StatefulWidget {
   @override
-  _LoginPageState createState() => _LoginPageState();
+  _SignupScreenState createState() => _SignupScreenState();
 }
 
-class _LoginPageState extends State<LoginScreen> {
+class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
   bool _isObscure = true;
 
@@ -24,27 +22,22 @@ class _LoginPageState extends State<LoginScreen> {
     });
   }
 
-  void _login() async {
+  void _signup() async {
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Passwords do not match")),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      final authService = Provider.of<AuthService>(context, listen: false);
-      final user = await authService.signInWithEmailPassword(
-        _emailController.text,
-        _passwordController.text,
-      );
-
-      if (user != null) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Email/Password doesn't exist. Please sign up to continue.")),
-        );
-      }
+      await Provider.of<AuthService>(context, listen: false)
+          .signUpWithEmailPassword(_emailController.text, _passwordController.text);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Login failed: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Signup failed: $e")),
+      );
     }
     setState(() => _isLoading = false);
   }
@@ -68,68 +61,35 @@ class _LoginPageState extends State<LoginScreen> {
               ),
             ),
             SizedBox(height: 40),
+            _buildTextField(_emailController, "Name", Icons.person, false, theme),
+            SizedBox(height: 10),
             _buildTextField(_emailController, "Email", Icons.email, false, theme),
             SizedBox(height: 10),
             _buildTextField(_passwordController, "Password", Icons.lock, true, theme),
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ForgotPasswordScreen()),
-                ),
-                child: Text("Forgot password?", style: TextStyle(color: theme.colorScheme.secondary)),
-              ),
-            ),
+            SizedBox(height: 10),
+            _buildTextField(_confirmPasswordController, "Confirm Password", Icons.lock, true, theme),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: _isLoading ? null : _login,
+              onPressed: _isLoading ? null : _signup,
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: theme.colorScheme.onPrimary,
                 minimumSize: Size(double.infinity, 50),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
               ),
-              child: _isLoading ? CircularProgressIndicator() : Text("Log In"),
-            ),
-            SizedBox(height: 20),
-            Text("OR", style: TextStyle(color: theme.colorScheme.onBackground)),
-            SizedBox(height: 20),
-            OutlinedButton(
-              onPressed: _isLoading ? null : () {},
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(color: theme.colorScheme.primary),
-                foregroundColor: theme.colorScheme.primary,
-                minimumSize: Size(double.infinity, 50),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  SizedBox(
-                    width: 24,
-                    height: 24,
-                    child: Image.asset(
-                      'assets/google_logo.png',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                  SizedBox(width: 10),
-                  Text("Continue with Google"),
-                ],
-              ),
+              child: _isLoading ? CircularProgressIndicator() : Text("Sign Up"),
             ),
             SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Don't have an account?", style: TextStyle(color: theme.colorScheme.onBackground)),
+                Text("Already have an account?", style: TextStyle(color: theme.colorScheme.onBackground)),
                 TextButton(
-                  onPressed: () => Navigator.push(
+                  onPressed: () => Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => SignupScreen()),
+                    MaterialPageRoute(builder: (context) => LoginScreen()),
                   ),
-                  child: Text("Sign Up", style: TextStyle(color: theme.colorScheme.secondary)),
+                  child: Text("Log In", style: TextStyle(color: theme.colorScheme.secondary)),
                 ),
               ],
             ),

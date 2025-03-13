@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:provider/provider.dart'; // Import provider
+import 'package:mad/core/splash_screen.dart';
+import 'package:mad/providers/theme_provider.dart';
+import 'package:provider/provider.dart';
+import 'features/auth/services/auth_service.dart';
 import 'firebase_options.dart';
 import 'features/home/screens/home_screen.dart';
-import 'widgets/bottom_nav_bar.dart';
-import 'providers/post_provider.dart'; // Import your PostProvider
+import 'providers/post_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,7 +15,9 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (context) => PostProvider()), // Provide PostProvider
+        Provider(create: (context) => AuthService()),
+        ChangeNotifierProvider(create: (context) => PostProvider()),
+        ChangeNotifierProvider(create: (context) => ThemeProvider()),
       ],
       child: const MyApp(),
     ),
@@ -25,13 +29,15 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Campzy',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: HomeScreen(),
+      themeMode: themeProvider.themeMode, // Uses ThemeProvider's theme mode
+      theme: ThemeData.light(), // Default Light Theme
+      darkTheme: ThemeData.dark(), // Dark Theme
+      home:  SplashScreen(),
     );
   }
 }
