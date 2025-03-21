@@ -15,8 +15,9 @@ class PostService {
     QuerySnapshot snapshot = await query.get();
 
     // 🔹 Convert Firestore Documents into PostModel list
-    return snapshot.docs.map((doc) => PostModel.fromDocument(doc)).toList();
+    return snapshot.docs.map((doc) => PostModel.fromFirestore(doc)).toList();
   }
+
 
   // ✅ Create a new post
   Future<void> createPost({

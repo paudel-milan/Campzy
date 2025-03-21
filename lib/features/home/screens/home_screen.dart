@@ -60,26 +60,18 @@ class _HomeScreenState extends State<HomeScreen>{
   }
 }
 
-class FeedScreen extends StatefulWidget {
-  @override
-  _FeedScreenState createState() => _FeedScreenState();
-}
 
-class _FeedScreenState extends State<FeedScreen> {
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() =>
-        Provider.of<PostProvider>(context, listen: false).fetchPosts());
-  }
 
+
+class FeedScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Consumer<PostProvider>(
       builder: (context, postProvider, child) {
         if (postProvider.posts.isEmpty) {
-          return Center(child: Text('No posts available'));
+          return Center(child: CircularProgressIndicator());
         }
+
         return ListView.builder(
           itemCount: postProvider.posts.length,
           itemBuilder: (context, index) {
@@ -91,4 +83,7 @@ class _FeedScreenState extends State<FeedScreen> {
     );
   }
 }
+
+
+
 
