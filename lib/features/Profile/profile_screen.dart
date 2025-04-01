@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:mad/features/Profile/about.dart';
 import '../auth/screens/login_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -143,7 +144,9 @@ class ProfileScreen extends StatelessWidget {
           ListTile(
             leading: Icon(Icons.info_outline, color: isDarkMode ? Colors.white : Colors.black),
             title: Text("About", style: textTheme.bodyLarge),
-            onTap: () {},
+            onTap: () {
+              Navigator.of(context).push(MaterialPageRoute( builder: (context) => AboutPage(),),);
+            },
           ),
         ],
       ),
