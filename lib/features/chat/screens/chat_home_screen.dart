@@ -41,39 +41,14 @@ class ChatHomeScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             SizedBox(height: 20),
-            _buildChatbotTile(context, isDarkMode),
             _buildOnlineUserList(context, isDarkMode),
+            _buildChatbotTile(context, isDarkMode),
             Expanded(child: _buildChatList(context, isDarkMode)),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildChatbotTile(BuildContext context, bool isDarkMode) {
-    return ListTile(
-      tileColor: isDarkMode ? Colors.grey[900] : Colors.white,
-      leading: CircleAvatar(
-        backgroundColor: isDarkMode ? Colors.blue[700] : Colors.blueAccent,
-        child: Icon(Icons.smart_toy, color: Colors.white),
-      ),
-      title: Text(
-        "Campzy AI Chatbot",
-        style: TextStyle(color: isDarkMode ? Colors.white : Colors.black, fontWeight: FontWeight.bold),
-      ),
-      subtitle: Text(
-        "Ask me anything!",
-        style: TextStyle(color: isDarkMode ? Colors.grey[400] : Colors.black54),
-      ),
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ChatbotScreen()), // Navigate to ChatbotScreen
-        );
-      },
-    );
-  }
-
 
   Widget _buildOnlineUserList(BuildContext context, bool isDarkMode) {
     return Container(
@@ -138,6 +113,30 @@ class ChatHomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildChatbotTile(BuildContext context, bool isDarkMode) {
+    return ListTile(
+      tileColor: isDarkMode ? Colors.grey[900] : Colors.white,
+      leading: CircleAvatar(
+        backgroundColor: isDarkMode ? Colors.blue[700] : Colors.blueAccent,
+        child: Icon(Icons.smart_toy, color: Colors.white),
+      ),
+      title: Text(
+        "Campzy AI Chatbot",
+        style: TextStyle(color: isDarkMode ? Colors.white : Colors.black, fontWeight: FontWeight.bold),
+      ),
+      subtitle: Text(
+        "Ask me anything!",
+        style: TextStyle(color: isDarkMode ? Colors.grey[400] : Colors.black54),
+      ),
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => ChatbotScreen()), // Navigate to ChatbotScreen
+        );
+      },
+    );
+  }
+
   Widget _buildChatList(BuildContext context, bool isDarkMode) {
     return ListView.builder(
       itemCount: allUsers.length,
@@ -167,3 +166,4 @@ class ChatHomeScreen extends StatelessWidget {
     );
   }
 }
+
