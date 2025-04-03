@@ -1,10 +1,11 @@
 import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter_iconly/flutter_iconly.dart';
 
 class CreatePostScreen extends StatefulWidget {
   @override
@@ -14,68 +15,112 @@ class CreatePostScreen extends StatefulWidget {
 class _CreatePostScreenState extends State<CreatePostScreen> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _titleController = TextEditingController();
-  File? _imageFile;
+  File? _file;
   final ImagePicker _picker = ImagePicker();
 
-  // Request Permission for Photos
-  Future<void> _requestPermission() async {
-    PermissionStatus status = await Permission.photos.request();
-    if (status.isGranted) {
-      // If permission is granted, pick the image
-      _pickImage();
-    } else if (status.isDenied || status.isPermanentlyDenied) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Permission denied. Please allow access to photos.')),
-      );
-    }
-  }
-
-  // Pick Image from Gallery
   Future<void> _pickImage() async {
-    try {
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-      if (pickedFile != null) {
-        setState(() {
-          _imageFile = File(pickedFile.path);
-        });
-      }
-    } catch (e) {
-      print('Error picking image: $e');
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    if (pickedFile != null) {
+      setState(() {
+        _file = File(pickedFile.path);
+      });
     }
   }
 
-  // Upload Image to Firebase Storage
-  Future<String> _uploadImage() async {
-    if (_imageFile == null) return '';
+  Future<void> _pickFile() async {
+    FilePickerResult? result = await FilePicker.platform.pickFiles();
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        _file = File(result.files.single.path!);
+      });
+    }
+  }
 
+  Future<String> _uploadFile() async {
+    if (_file == null) return '';
     try {
       String fileName = DateTime.now().millisecondsSinceEpoch.toString();
-      UploadTask uploadTask = FirebaseStorage.instance
-          .ref('posts/$fileName')
-          .putFile(_imageFile!);
-
+      UploadTask uploadTask = FirebaseStorage.instance.ref('posts/$fileName').putFile(_file!);
       TaskSnapshot snapshot = await uploadTask;
-      String imageUrl = await snapshot.ref.getDownloadURL();
-      return imageUrl;
+      return await snapshot.ref.getDownloadURL();
     } catch (e) {
-      print('Error uploading image: $e');
+      print('Error uploading file: $e');
       return '';
+    }
+  }
+
+  void _showFileSourceSelection() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return Container(
+          padding: EdgeInsets.all(10),
+          height: 150,
+          child: Column(
+            children: [
+              ListTile(
+                leading: Icon(IconlyBold.camera, color: Color(0xFF7851A9)),
+                title: Text("Take a Photo"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage();
+                },
+              ),
+              ListTile(
+                leading: Icon(IconlyBold.upload, color: Color(0xFF7851A9)),
+                title: Text("Choose a File"),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickFile();
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Future<void> _post() async {
+    if (_descriptionController.text.trim().isEmpty || _titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please enter a title and description.')),
+      );
+      return;
+    }
+
+    String fileUrl = await _uploadFile();
+    final user = FirebaseAuth.instance.currentUser;
+
+    await FirebaseFirestore.instance.collection('posts').add({
+      'authorId': user?.uid,
+      'authorName': user?.displayName ?? 'Anonymous',
+      'createdAt': Timestamp.now(),
+      'description': _descriptionController.text.trim(),
+      'fileUrl': fileUrl,
+      'title': _titleController.text.trim(),
+    });
+
+    _descriptionController.clear();
+    _titleController.clear();
+    setState(() {
+      _file = null;
+    });
+
+    // Fix: Ensure proper redirection to the home page after posting
+    if (Navigator.canPop(context)) {
+      Navigator.pop(context);
+    } else {
+      Navigator.pushReplacementNamed(context, '/home');
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
-
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Create Post'),
-        backgroundColor: Color(0xFF7851A9),
-        elevation: 0,
-      ),
-      body: user == null
-          ? Center(child: Text("You need to log in to create a post"))
-          : Padding(
+      body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -84,117 +129,52 @@ class _CreatePostScreenState extends State<CreatePostScreen> {
               children: [
                 CircleAvatar(
                   radius: 25,
-                  backgroundImage: NetworkImage(
-                    user.photoURL ?? 'https://www.example.com/default_profile_pic.png',
-                  ),
+                  backgroundImage: user?.photoURL != null ? NetworkImage(user!.photoURL!) : null,
+                  child: user?.photoURL == null ? Icon(Icons.person, size: 30) : null,
                 ),
                 SizedBox(width: 10),
                 Text(
-                  user.displayName ?? user.email ?? 'Anonymous',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  user?.displayName ?? 'Anonymous',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
               ],
             ),
             SizedBox(height: 20),
-
-            // Title input field
             TextField(
               controller: _titleController,
               decoration: InputDecoration(
                 labelText: 'Post Title',
-                hintText: 'Enter a title for your post',
+                hintText: 'Enter a title',
                 border: OutlineInputBorder(),
               ),
-              maxLines: 1,
             ),
             SizedBox(height: 20),
-
-            // Description input field
-            Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: Colors.grey.withOpacity(0.5),
-                ),
-              ),
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-              child: TextField(
-                controller: _descriptionController,
-                maxLines: 5,
-                decoration: InputDecoration(
-                  hintText: 'What\'s on your mind?',
-                  border: InputBorder.none,
-                ),
+            TextField(
+              controller: _descriptionController,
+              maxLines: 5,
+              decoration: InputDecoration(
+                hintText: "What's on your mind?",
+                filled: true,
+                fillColor: isDarkMode ? Colors.grey[900] : Colors.white,
+                border: OutlineInputBorder(),
               ),
             ),
             SizedBox(height: 20),
-
-            // Image picker button
             GestureDetector(
-              onTap: _requestPermission,  // Request permission before picking image
-              child: _imageFile == null
-                  ? Icon(
-                Icons.add_photo_alternate,
-                color: Color(0xFF7851A9),
-                size: 40,
-              )
-                  : Image.file(
-                _imageFile!,
-                width: 150,
-                height: 150,
-                fit: BoxFit.cover,
-              ),
+              onTap: _showFileSourceSelection,
+              child: _file == null
+                  ? Icon(IconlyBold.image, size: 40, color: Color(0xFF7851A9))
+                  : Image.file(_file!, width: 150, height: 150, fit: BoxFit.cover),
             ),
             SizedBox(height: 20),
-
-            // Post Button
             Center(
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Color(0xFF7851A9),
-                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                onPressed: () async {
-                  if (_descriptionController.text.trim().isEmpty ||
-                      _titleController.text.trim().isEmpty) {
-                    return;
-                  }
-
-                  // Upload image if available
-                  String imageUrl = await _uploadImage();
-
-                  // Add the post data to Firestore
-                  await FirebaseFirestore.instance.collection('posts').add({
-                    'authorId': user.displayName ?? user.email ?? 'Anonymous',
-                    'createdAt': Timestamp.now(),
-                    'description': _descriptionController.text.trim(),
-                    'imageUrl': imageUrl,
-                    'title': _titleController.text.trim(),
-                  });
-
-                  // Clear the input fields and go back to the home screen
-                  _descriptionController.clear();
-                  _titleController.clear();
-                  setState(() {
-                    _imageFile = null;
-                  });
-                  Navigator.pushReplacementNamed(context, '/home');  // Navigate to Home
-                },
-                child: Text(
-                  'Post',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
+                onPressed: _post,
+                child: Text('Post', style: TextStyle(color: Colors.white)),
               ),
             ),
           ],

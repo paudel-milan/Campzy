@@ -10,6 +10,7 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
@@ -32,15 +33,36 @@ class _SignupScreenState extends State<SignupScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await Provider.of<AuthService>(context, listen: false)
-          .signUpWithEmailPassword(_emailController.text, _passwordController.text);
+      final authService = Provider.of<AuthService>(context, listen: false);
+      final userCredential = await authService.signUpWithEmailPassword(
+        _emailController.text.trim(),
+        _passwordController.text.trim(),
+        _nameController.text.trim(),
+      );
+
+      if (userCredential != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Signup Successful! Please log in.")),
+        );
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => LoginScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Signup failed. Please try again.")),
+        );
+      }
     } catch (e) {
+      print("Signup Error: $e"); // Print full error in console
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Signup failed: $e")),
+        SnackBar(content: Text("Signup failed: ${e.toString()}")),
       );
     }
     setState(() => _isLoading = false);
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -61,7 +83,7 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ),
             SizedBox(height: 40),
-            _buildTextField(_emailController, "Name", Icons.person, false, theme),
+            _buildTextField(_nameController, "Name", Icons.person, false, theme),
             SizedBox(height: 10),
             _buildTextField(_emailController, "Email", Icons.email, false, theme),
             SizedBox(height: 10),

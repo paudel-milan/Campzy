@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mad/features/Profile/profile_screen.dart';
 import 'package:mad/features/home/screens/search_screen.dart';
 import 'package:mad/features/home/screens/setting_screen.dart';
@@ -8,7 +9,7 @@ import '/widgets/bottom_nav_bar.dart';
 import '/features/posts/widgets/post_card.dart';
 import '/providers/post_provider.dart';
 import '/providers/auth_provider.dart';
-import '/features/chat/screens/chat_screen.dart';
+import '/features/chat/screens/chat_home_screen.dart';
 import '/features/posts/screens/create_post_screen.dart';
 
 class HomeScreen extends StatefulWidget{
@@ -23,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen>{
     FeedScreen(),
     CommunitiesScreen(),
     CreatePostScreen(),
-    ChatScreen(),
+    ChatHomeScreen(),
     ProfileScreen(),
   ];
 
@@ -37,7 +38,13 @@ class _HomeScreenState extends State<HomeScreen>{
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Campzy"),
+        title: Text(
+          "Campzy",
+          style: GoogleFonts.lobster(
+            fontSize: 30,
+            color: Theme.of(context).colorScheme.primary, // Fixed theme access
+          ),
+        ),
         actions: [
           IconButton(
               onPressed: (){

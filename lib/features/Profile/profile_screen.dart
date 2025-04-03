@@ -2,40 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:mad/features/Profile/about.dart';
+import '../../models/post_model.dart';
+import '../posts/widgets/post_card.dart';
 import '../auth/screens/login_screen.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final Color themeColor = Color(0xFF7851A9);
 
   @override
   Widget build(BuildContext context) {
     final User? user = _auth.currentUser;
     final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-    final isDarkMode = theme.brightness == Brightness.dark;
+    final bool isDarkMode = theme.brightness == Brightness.dark;
+    final Color backgroundColor = isDarkMode ? Colors.black : Colors.white;
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Profile', style: textTheme.titleLarge),
-        backgroundColor: isDarkMode ? Colors.black : Colors.blue,
-        actions: [
-          if (user != null)
-            IconButton(
-              icon: Icon(Icons.logout, color: Colors.white),
-              onPressed: () async {
-                await _auth.signOut();
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginScreen()),
-                );
-              },
-            ),
-        ],
-      ),
+      backgroundColor: backgroundColor,
       body: user == null
-          ? _buildAnonymousProfile(context, textTheme, isDarkMode)
+          ? _buildAnonymousProfile(context)
           : FutureBuilder<DocumentSnapshot>(
         future: _firestore.collection('users').doc(user.uid).get(),
         builder: (context, snapshot) {
@@ -43,123 +30,141 @@ class ProfileScreen extends StatelessWidget {
             return Center(child: CircularProgressIndicator());
           }
           if (!snapshot.hasData || !snapshot.data!.exists) {
-            return Center(child: Text("User data not found", style: textTheme.bodyLarge));
+            return Center(child: Text("User data not found"));
           }
           var userData = snapshot.data!.data() as Map<String, dynamic>;
-          return _buildUserProfile(context, userData, textTheme, isDarkMode);
+          return _buildUserProfile(context, userData, user.uid);
         },
       ),
     );
   }
 
-  /// Anonymous User Profile
-  Widget _buildAnonymousProfile(BuildContext context, TextTheme textTheme, bool isDarkMode) {
+  Widget _buildAnonymousProfile(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircleAvatar(
-            radius: 50,
-            backgroundImage: AssetImage('assets/anonymous.png'),
-          ),
+          CircleAvatar(radius: 50, child: Icon(Icons.person, size: 50)),
           SizedBox(height: 10),
-          Text("Anonymous User", style: textTheme.titleLarge),
-          Text("Login to access your profile", style: textTheme.bodyMedium),
+          Text("Anonymous User", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text("Login to access your profile"),
           SizedBox(height: 20),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: themeColor),
             onPressed: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => LoginScreen()),
-              );
+              Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => LoginScreen()));
             },
-            child: Text("Login"),
+            child: Text("Login", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  /// Logged-in User Profile (Reddit-style)
-  Widget _buildUserProfile(BuildContext context, Map<String, dynamic> userData, TextTheme textTheme, bool isDarkMode) {
+  Widget _buildUserProfile(BuildContext context, Map<String, dynamic> userData, String uid) {
     return SingleChildScrollView(
       child: Column(
         children: [
-          // Banner Section (like Reddit)
-          Stack(
-            children: [
-              Container(
-                height: 120,
-                color: isDarkMode ? Colors.grey[900] : Colors.blueAccent,
-              ),
-              Positioned(
-                bottom: -30,
-                left: 20,
-                child: CircleAvatar(
-                  radius: 50,
-                  backgroundColor: Colors.white,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: 40,
+                  backgroundColor: Colors.grey.shade300,
                   child: ClipOval(
                     child: CachedNetworkImage(
                       imageUrl: userData['profilePic'] ?? '',
                       placeholder: (context, url) => CircularProgressIndicator(),
-                      errorWidget: (context, url, error) =>
-                          Image.asset('assets/default_avatar.png', fit: BoxFit.cover),
-                      width: 100,
-                      height: 100,
+                      errorWidget: (context, url, error) => Icon(Icons.person, size: 40, color: Colors.grey),
+                      width: 80,
+                      height: 80,
                       fit: BoxFit.cover,
                     ),
                   ),
                 ),
-              ),
-            ],
+                SizedBox(width: 20),
+                Expanded(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      _buildStatColumn("Posts", userData['postsCount']?.toString() ?? "0"),
+                      _buildStatColumn("Followers", userData['followers']?.toString() ?? "0"),
+                      _buildStatColumn("Following", userData['following']?.toString() ?? "0"),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-          SizedBox(height: 40),
-
-          // User Info
-          Text(userData['name'] ?? "No Name", style: textTheme.titleLarge),
-          Text(userData['email'] ?? "No Email", style: textTheme.bodyMedium),
-
-          SizedBox(height: 10),
-          Divider(color: isDarkMode ? Colors.white24 : Colors.black12),
-
-          // Karma & Badges
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: [
-              _buildStatCard("Posts", userData['postsCount']?.toString() ?? "0", isDarkMode),
-              _buildStatCard("Followers", userData['followers']?.toString() ?? "0", isDarkMode),
-              _buildStatCard("Following", userData['following']?.toString() ?? "0", isDarkMode),
-            ],
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(userData['name'] ?? "No Name", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(userData['bio'] ?? "No bio available"),
+                SizedBox(height: 10),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: themeColor),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => EditProfileScreen(userData: userData)),
+                    );
+                  },
+                  child: Text("Edit Profile", style: TextStyle(color: Colors.white)),
+                ),
+                Divider(),
+              ],
+            ),
           ),
-
-          SizedBox(height: 20),
-          Divider(color: isDarkMode ? Colors.white24 : Colors.black12),
-
-          // Settings & About
-          ListTile(
-            leading: Icon(Icons.settings, color: isDarkMode ? Colors.white : Colors.black),
-            title: Text("Settings", style: textTheme.bodyLarge),
-            onTap: () {},
-          ),
-          ListTile(
-            leading: Icon(Icons.info_outline, color: isDarkMode ? Colors.white : Colors.black),
-            title: Text("About", style: textTheme.bodyLarge),
-            onTap: () {
-              Navigator.of(context).push(MaterialPageRoute( builder: (context) => AboutPage(),),);
-            },
-          ),
+          _buildUserPosts(uid),
         ],
       ),
     );
   }
 
-  /// User Stats Card (Posts, Followers, Following)
-  Widget _buildStatCard(String label, String value, bool isDarkMode) {
+  Widget _buildStatColumn(String label, String value) {
     return Column(
       children: [
         Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-        Text(label, style: TextStyle(color: isDarkMode ? Colors.grey[400] : Colors.grey[600])),
+        Text(label, style: TextStyle(color: Colors.grey)),
       ],
+    );
+  }
+
+  Widget _buildUserPosts(String uid) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: _firestore.collection('posts').where('uid', isEqualTo: uid).snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text("No posts yet"));
+        }
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 3,
+            crossAxisSpacing: 5,
+            mainAxisSpacing: 5,
+          ),
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            var doc = snapshot.data!.docs[index];
+            return CachedNetworkImage(
+              imageUrl: doc['imageUrl'] ?? '',
+              placeholder: (context, url) => CircularProgressIndicator(),
+              errorWidget: (context, url, error) => Icon(Icons.image, color: Colors.grey),
+              fit: BoxFit.cover,
+            );
+          },
+        );
+      },
     );
   }
 }
