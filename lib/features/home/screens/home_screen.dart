@@ -11,15 +11,16 @@ import '/providers/post_provider.dart';
 import '/providers/auth_provider.dart';
 import '/features/chat/screens/chat_home_screen.dart';
 import '/features/posts/screens/create_post_screen.dart';
+import '/features/posts/screens/post_screen.dart'; // <-- add this import
 
-class HomeScreen extends StatefulWidget{
+class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen>{
-  int _selectedIndex=0;
-  // Pages for Bottom Navigation
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+
   static final List<Widget> _pages = [
     FeedScreen(),
     CommunitiesScreen(),
@@ -28,9 +29,9 @@ class _HomeScreenState extends State<HomeScreen>{
     ProfileScreen(),
   ];
 
-  void _onItemTapped(int index){
+  void _onItemTapped(int index) {
     setState(() {
-      _selectedIndex=index;
+      _selectedIndex = index;
     });
   }
 
@@ -42,33 +43,36 @@ class _HomeScreenState extends State<HomeScreen>{
           "Campzy",
           style: GoogleFonts.lobster(
             fontSize: 30,
-            color: Theme.of(context).colorScheme.primary, // Fixed theme access
+            color: Theme.of(context).colorScheme.primary,
           ),
         ),
         actions: [
           IconButton(
-              onPressed: (){
-                Navigator.push(context,MaterialPageRoute(builder: (context) => SearchScreen()));
-              },
-              icon: Icon(Icons.search)),
-          IconButton(onPressed: (){}, icon: Icon(Icons.notifications)),
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => SearchScreen()));
+            },
+            icon: Icon(Icons.search),
+          ),
           IconButton(
-            onPressed: (){
-              Navigator.push(context,MaterialPageRoute(builder: (context) => SettingScreen()));},
-            icon: Icon(Icons.menu)),
+            onPressed: () {},
+            icon: Icon(Icons.notifications),
+          ),
+          IconButton(
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => SettingScreen()));
+            },
+            icon: Icon(Icons.menu),
+          ),
         ],
       ),
       body: IndexedStack(
-        index: _selectedIndex, // Maintain state of pages
+        index: _selectedIndex,
         children: _pages,
       ),
       bottomNavigationBar: BottomNavBar(currentIndex: _selectedIndex, onTap: _onItemTapped),
     );
   }
 }
-
-
-
 
 class FeedScreen extends StatelessWidget {
   @override
@@ -83,14 +87,18 @@ class FeedScreen extends StatelessWidget {
           itemCount: postProvider.posts.length,
           itemBuilder: (context, index) {
             final post = postProvider.posts[index];
-            return PostCard(post: post);
+            return GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => PostScreen(post: post)),
+                );
+              },
+              child: PostCard(post: post),
+            );
           },
         );
       },
     );
   }
 }
-
-
-
-

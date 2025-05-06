@@ -4,8 +4,7 @@ import 'package:http/http.dart' as http;
 
 class ChatbotService {
   static final String apiKey = dotenv.env['HF_API_KEY'] ?? ''; // Load from .env
-  static final String apiUrl = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill";
-// Correct API
+  static final String apiUrl = "https://api-inference.huggingface.co/models/facebook/blenderbot-400M-distill"; // Correct API
 
   static Future<String> getResponse(String userInput) async {
     try {

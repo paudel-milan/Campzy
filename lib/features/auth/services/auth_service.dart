@@ -1,35 +1,36 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../../../models/user_model.dart'; // adjust path if needed
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   // Check if user is logged in
-  User? getCurrentUser() {
-    return _auth.currentUser;
-  }
+  User? getCurrentUser() => _auth.currentUser;
 
-  bool isUserLoggedIn() {
-    return _auth.currentUser != null;
-  }
+  bool isUserLoggedIn() => _auth.currentUser != null;
 
-// Sign up with email and password
-  Future<UserCredential?> signUpWithEmailPassword(String email, String password, String name) async {
+  // Sign up with email & password
+  Future<UserCredential?> signUpWithEmailPassword(String email, String password, String username) async {
     try {
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
 
-      // Store user info in Firestore
-      await _firestore.collection('users').doc(userCredential.user!.uid).set({
-        'uid': userCredential.user!.uid,
-        'name': name, // Store name
-        'email': email,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      // Create AppUser model
+      AppUser newUser = AppUser(
+        uid: userCredential.user!.uid,
+        username: username,
+        email: email,
+        bio: '',
+        profilePic: '',
+        createdAt: DateTime.now(),
+      );
+
+      await _firestore.collection('users').doc(newUser.uid).set(newUser.toMap());
 
       return userCredential;
     } catch (e) {
@@ -38,43 +39,53 @@ class AuthService {
     }
   }
 
-
-  // Sign in with email and password
+  // Sign in with email & password
   Future<UserCredential?> signInWithEmailPassword(String email, String password) async {
     try {
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(email: email, password: password);
-      return userCredential;
+      return await _auth.signInWithEmailAndPassword(email: email, password: password);
     } catch (e) {
       print("Error signing in: $e");
       return null;
     }
   }
 
-
-
   // Sign in with Google
   Future<UserCredential?> signInWithGoogle() async {
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
-    if (googleUser == null) return null;
+    try {
+      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return null;
 
-    final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-    final credential = GoogleAuthProvider.credential(
-      accessToken: googleAuth.accessToken,
-      idToken: googleAuth.idToken,
-    );
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
 
-    final userCredential = await _auth.signInWithCredential(credential);
+      final userCredential = await _auth.signInWithCredential(credential);
+      final user = userCredential.user;
 
-    // Store user info in Firestore
-    await _firestore.collection('users').doc(userCredential.user!.uid).set({
-      'uid': userCredential.user!.uid,
-      'name': userCredential.user!.displayName,
-      'email': userCredential.user!.email,
-      'profilePic': userCredential.user!.photoURL,
-      'createdAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
+      if (user != null) {
+        // Build AppUser
+        AppUser googleUserModel = AppUser(
+          uid: user.uid,
+          username: user.displayName ?? 'Unknown',
+          email: user.email ?? '',
+          bio: '',
+          profilePic: user.photoURL ?? '',
+          createdAt: DateTime.now(),
+        );
 
-    return userCredential;
+        await _firestore.collection('users').doc(user.uid).set(
+          googleUserModel.toMap(),
+          SetOptions(merge: true),
+        );
+      }
+
+      return userCredential;
+    } catch (e) {
+      print("Google Sign-In Error: $e");
+      return null;
+    }
   }
 
   // Logout

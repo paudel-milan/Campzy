@@ -29,6 +29,22 @@ class PostProvider with ChangeNotifier {
     );
   }
 
+  /// ✅ Add a new post to Firestore
+  Future<void> createPost({required String content, required String uid}) async {
+    try {
+      final newPost = {
+        'content': content,
+        'uid': uid,
+        'createdAt': FieldValue.serverTimestamp(),
+      };
+
+      await _firestore.collection('posts').add(newPost);
+      print("✅ Post created successfully.");
+    } catch (e) {
+      print('❌ Error creating post: $e');
+    }
+  }
+
   /// ✅ Delete post from Firestore
   Future<void> deletePost(String postId) async {
     try {

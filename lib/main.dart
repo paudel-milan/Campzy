@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mad/core/splash_screen.dart';
+import 'package:mad/providers/auth_provider.dart';
+import 'package:mad/providers/chat_provider.dart';
 import 'package:mad/providers/theme_provider.dart';
 import 'package:provider/provider.dart';
 import 'features/auth/services/auth_service.dart';
@@ -9,10 +11,11 @@ import 'firebase_options.dart';
 import 'features/home/screens/home_screen.dart';
 import 'providers/post_provider.dart';
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await dotenv.load(fileName: ".env");
+  await dotenv.load(fileName: "assets/.env");
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
@@ -20,8 +23,10 @@ void main() async {
     MultiProvider(
       providers: [
         Provider(create: (context) => AuthService()),
+        // ChangeNotifierProvider(create: (context) => AuthProvider()),
         ChangeNotifierProvider(create: (context) => PostProvider()),
         ChangeNotifierProvider(create: (context) => ThemeProvider()),
+        ChangeNotifierProvider(create: (context) => ChatProvider()),
       ],
       child: const MyApp(),
     ),

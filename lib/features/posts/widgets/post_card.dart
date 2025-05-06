@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../screens/comment_screen.dart';
 import '/models/post_model.dart';
 
 class PostCard extends StatefulWidget {
@@ -18,61 +20,106 @@ class _PostCardState extends State<PostCard> {
   bool hasUpvoted = false;
   bool hasDownvoted = false;
 
+  final String userId = FirebaseAuth.instance.currentUser!.uid;
+
   @override
   void initState() {
     super.initState();
     upvotes = widget.post.upvotes ?? 0;
     downvotes = widget.post.downvotes ?? 0;
+    _fetchUserVoteStatus();
   }
 
-  void _handleUpvote() {
-    setState(() {
-      if (hasUpvoted) {
-        upvotes--;
-      } else {
+  Future<void> _fetchUserVoteStatus() async {
+    final voteDoc = await FirebaseFirestore.instance
+        .collection('posts')
+        .doc(widget.post.postId)
+        .collection('votes')
+        .doc(userId)
+        .get();
+
+    if (voteDoc.exists) {
+      final voteType = voteDoc.data()!['voteType'];
+      setState(() {
+        hasUpvoted = voteType == 'upvote';
+        hasDownvoted = voteType == 'downvote';
+      });
+    }
+  }
+
+  Future<void> _handleUpvote() async {
+    final postRef = FirebaseFirestore.instance.collection('posts').doc(widget.post.postId);
+    final voteRef = postRef.collection('votes').doc(userId);
+
+    if (hasUpvoted) {
+      // Remove upvote
+      setState(() => upvotes--);
+      await voteRef.delete();
+      await postRef.update({'upvotes': FieldValue.increment(-1)});
+    } else {
+      // Add upvote
+      setState(() {
         upvotes++;
         if (hasDownvoted) {
           downvotes--;
           hasDownvoted = false;
         }
-      }
-      hasUpvoted = !hasUpvoted;
-    });
+        hasUpvoted = true;
+      });
 
-    FirebaseFirestore.instance.collection('posts').doc(widget.post.postId).update({
-      'upvotes': upvotes,
-      'downvotes': downvotes,
-    });
+      await voteRef.set({'voteType': 'upvote'});
+      await postRef.update({
+        'upvotes': FieldValue.increment(1),
+        'downvotes': hasDownvoted ? FieldValue.increment(-1) : FieldValue.increment(0),
+      });
+
+      // Remove previous downvote if it existed
+      if (hasDownvoted) {
+        await voteRef.set({'voteType': 'upvote'});
+      }
+    }
   }
 
-  void _handleDownvote() {
-    setState(() {
-      if (hasDownvoted) {
-        downvotes--;
-      } else {
+  Future<void> _handleDownvote() async {
+    final postRef = FirebaseFirestore.instance.collection('posts').doc(widget.post.postId);
+    final voteRef = postRef.collection('votes').doc(userId);
+
+    if (hasDownvoted) {
+      // Remove downvote
+      setState(() => downvotes--);
+      await voteRef.delete();
+      await postRef.update({'downvotes': FieldValue.increment(-1)});
+    } else {
+      // Add downvote
+      setState(() {
         downvotes++;
         if (hasUpvoted) {
           upvotes--;
           hasUpvoted = false;
         }
-      }
-      hasDownvoted = !hasDownvoted;
-    });
+        hasDownvoted = true;
+      });
 
-    FirebaseFirestore.instance.collection('posts').doc(widget.post.postId).update({
-      'upvotes': upvotes,
-      'downvotes': downvotes,
-    });
+      await voteRef.set({'voteType': 'downvote'});
+      await postRef.update({
+        'downvotes': FieldValue.increment(1),
+        'upvotes': hasUpvoted ? FieldValue.increment(-1) : FieldValue.increment(0),
+      });
+
+      // Remove previous upvote if it existed
+      if (hasUpvoted) {
+        await voteRef.set({'voteType': 'downvote'});
+      }
+    }
   }
 
-  void _deletePost() async {
+  Future<void> _deletePost() async {
     await FirebaseFirestore.instance.collection('posts').doc(widget.post.postId).delete();
   }
 
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    final backgroundColor = isDarkMode ? Colors.grey[900] : Colors.white;
     final textColor = isDarkMode ? Colors.white : Colors.black;
     final cardColor = isDarkMode ? Colors.black : Colors.white;
     final iconColor = isDarkMode ? Colors.white : Colors.black54;
@@ -89,28 +136,19 @@ class _PostCardState extends State<PostCard> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // User Info and Menu
+            // User info and delete
             Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: Colors.grey[300],
                   backgroundImage: widget.post.profilePicUrl.isNotEmpty
                       ? NetworkImage(widget.post.profilePicUrl)
                       : null,
-                  child: widget.post.profilePicUrl.isEmpty
-                      ? Icon(Icons.person, color: Colors.white)
-                      : null,
+                  child: widget.post.profilePicUrl.isEmpty ? Icon(Icons.person) : null,
                 ),
                 SizedBox(width: 10),
                 Expanded(
-                  child: Text(
-                    widget.post.username,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: textColor,
-                    ),
-                  ),
+                  child: Text(widget.post.username,
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: textColor)),
                 ),
                 PopupMenuButton<String>(
                   onSelected: (value) {
@@ -127,65 +165,62 @@ class _PostCardState extends State<PostCard> {
             ),
             SizedBox(height: 10),
 
-            // Post Title
-            Text(
-              widget.post.title,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor),
-            ),
+            // Title
+            Text(widget.post.title,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: textColor)),
             SizedBox(height: 5),
 
-            // Post Description
-            Text(
-              widget.post.description,
-              style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.grey[400] : Colors.grey[700]),
-            ),
+            // Description
+            Text(widget.post.description,
+                style: TextStyle(fontSize: 14, color: isDarkMode ? Colors.grey[400] : Colors.grey[700])),
             SizedBox(height: 10),
 
-            // Image (if available)
+            // Image
             if (widget.post.imageUrl.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(10),
                 child: Image.network(widget.post.imageUrl, fit: BoxFit.cover),
               ),
-
             SizedBox(height: 10),
 
-            // Post Date
+            // Date
             Text(
               "Posted on ${DateFormat.yMMMd().format((widget.post.createdAt as Timestamp).toDate())}",
               style: TextStyle(fontSize: 12, color: isDarkMode ? Colors.grey[500] : Colors.grey),
             ),
             SizedBox(height: 10),
 
-            // Interaction Buttons (Upvote, Downvote, Comment, Share)
+            // Interactions
             Row(
               children: [
                 IconButton(
                   icon: Icon(Icons.arrow_upward, color: upvoteColor),
                   onPressed: _handleUpvote,
                 ),
-                Text("$upvotes", style: TextStyle(color: textColor)),
-
+                Text('$upvotes', style: TextStyle(color: textColor)),
                 IconButton(
                   icon: Icon(Icons.arrow_downward, color: downvoteColor),
                   onPressed: _handleDownvote,
                 ),
-                Text("$downvotes", style: TextStyle(color: textColor)),
-
+                Text('$downvotes', style: TextStyle(color: textColor)),
                 Spacer(),
-
                 IconButton(
                   icon: Icon(Icons.comment, color: iconColor),
                   onPressed: () {
-                    // Navigate to comments page
+                    // Navigate to comment screen
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => CommentScreen(postId: widget.post.postId),
+                      ),
+                    );
                   },
                 ),
-                Text("${widget.post.commentsCount}", style: TextStyle(color: textColor)),
-
+                Text('${widget.post.commentsCount}', style: TextStyle(color: textColor)),
                 IconButton(
                   icon: Icon(Icons.share, color: iconColor),
                   onPressed: () {
-                    // Share post functionality
+                    // Share feature
                   },
                 ),
               ],

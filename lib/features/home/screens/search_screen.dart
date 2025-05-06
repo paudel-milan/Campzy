@@ -101,7 +101,7 @@ class _SearchScreenState extends State<SearchScreen> {
       stream: FirebaseFirestore.instance
           .collection('users')
           .where('username', isGreaterThanOrEqualTo: searchQuery)
-          .where('username', isLessThan: searchQuery + 'z')
+          .where('username', isLessThan: searchQuery + '\uf8ff') // Range query for case-insensitive search
           .snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return Center(child: CircularProgressIndicator());
@@ -116,6 +116,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 backgroundImage: NetworkImage(user['profilePic'] ?? ""),
               ),
               title: Text(user['username']),
+              subtitle: Text(user['bio'] ?? 'No bio available'),
               onTap: () {
                 // Navigate to User Profile Page (Implement this)
               },
