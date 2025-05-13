@@ -21,7 +21,7 @@ class AuthProvider with ChangeNotifier {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
     } catch (e) {
       print("Login Error: $e");
-      throw e;
+      rethrow;
     }
   }
 

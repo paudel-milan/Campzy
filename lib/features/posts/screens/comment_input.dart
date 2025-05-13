@@ -5,11 +5,11 @@ class CommentInput extends StatelessWidget {
   final String postId;
   final String uid;
 
-  CommentInput({required this.postId, required this.uid});
+  const CommentInput({super.key, required this.postId, required this.uid});
 
   @override
   Widget build(BuildContext context) {
-    TextEditingController _commentController = TextEditingController();
+    TextEditingController commentController = TextEditingController();
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -17,7 +17,7 @@ class CommentInput extends StatelessWidget {
         children: [
           Expanded(
             child: TextField(
-              controller: _commentController,
+              controller: commentController,
               decoration: InputDecoration(
                 hintText: 'Add a comment...',
                 border: OutlineInputBorder(
@@ -29,8 +29,8 @@ class CommentInput extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.send),
             onPressed: () {
-              _addComment(postId, _commentController.text, uid);
-              _commentController.clear();
+              _addComment(postId, commentController.text, uid);
+              commentController.clear();
             },
           ),
         ],

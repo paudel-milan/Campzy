@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 
-class RefreshPage extends StatefulWidget {
-  final Widget child; // The page content
-  final Future<void> Function() onRefresh; // Function to refresh data
+class RefreshPage extends StatelessWidget {
+  final Widget child;
+  final Future<void> Function() onRefresh;
 
-  const RefreshPage({Key? key, required this.child, required this.onRefresh})
-      : super(key: key);
+  const RefreshPage({super.key, required this.child, required this.onRefresh});
 
-  @override
-  _RefreshPageState createState() => _RefreshPageState();
-}
-
-class _RefreshPageState extends State<RefreshPage> {
   @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
-      onRefresh: widget.onRefresh,
-      child: SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        child: widget.child,
+      onRefresh: onRefresh,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: child,
+            ),
+          );
+        },
       ),
     );
   }

@@ -8,6 +8,8 @@ import 'forgot_password_screen.dart';
 
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -93,7 +95,7 @@ class _LoginPageState extends State<LoginScreen> {
               child: _isLoading ? CircularProgressIndicator() : Text("Log In"),
             ),
             SizedBox(height: 20),
-            Text("OR", style: TextStyle(color: theme.colorScheme.onBackground)),
+            Text("OR", style: TextStyle(color: theme.colorScheme.onSurface)),
             SizedBox(height: 20),
             OutlinedButton(
               onPressed: _isLoading ? null : () {},
@@ -123,7 +125,7 @@ class _LoginPageState extends State<LoginScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Don't have an account?", style: TextStyle(color: theme.colorScheme.onBackground)),
+                Text("Don't have an account?", style: TextStyle(color: theme.colorScheme.onSurface)),
                 TextButton(
                   onPressed: () => Navigator.push(
                     context,

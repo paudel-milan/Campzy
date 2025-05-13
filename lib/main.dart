@@ -22,7 +22,6 @@ void main() async {
   await dotenv.load(fileName: "assets/.env");
 
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-
   runApp(
     MultiProvider(
       providers: [
@@ -75,7 +74,7 @@ void main() async {
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {

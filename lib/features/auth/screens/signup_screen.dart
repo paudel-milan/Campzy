@@ -5,6 +5,8 @@ import '../services/auth_service.dart';
 import 'login_screen.dart';
 
 class SignupScreen extends StatefulWidget {
+  const SignupScreen({super.key});
+
   @override
   _SignupScreenState createState() => _SignupScreenState();
 }
@@ -105,7 +107,7 @@ class _SignupScreenState extends State<SignupScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text("Already have an account?", style: TextStyle(color: theme.colorScheme.onBackground)),
+                Text("Already have an account?", style: TextStyle(color: theme.colorScheme.onSurface)),
                 TextButton(
                   onPressed: () => Navigator.pushReplacement(
                     context,

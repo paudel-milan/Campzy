@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../services/chatbot_service.dart';
 
 class ChatbotScreen extends StatefulWidget {
+  const ChatbotScreen({super.key});
+
   @override
   _ChatScreenState createState() => _ChatScreenState();
 }

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 class CommentList extends StatelessWidget {
   final String postId;
 
-  CommentList({required this.postId});
+  const CommentList({super.key, required this.postId});
 
   @override
   Widget build(BuildContext context) {

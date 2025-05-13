@@ -5,6 +5,8 @@ import '../features/auth/services/auth_service.dart';
 import '../features/home/screens/home_screen.dart';
 
 class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
+
   @override
   _SplashScreenState createState() => _SplashScreenState();
 }
