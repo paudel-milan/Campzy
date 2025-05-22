@@ -1,6 +1,8 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class AppUser {
   final String uid;
-  final String username;
+  final String username; // From your original version
   final String email;
   final String bio;
   final String profilePic;
@@ -15,21 +17,19 @@ class AppUser {
     required this.createdAt,
   });
 
-  // Convert Firestore document to AppUser
+  // Firestore → AppUser
   factory AppUser.fromMap(Map<String, dynamic> map) {
     return AppUser(
       uid: map['uid'],
-      username: map['username'],
-      email: map['email'],
+      username: map['username'] ?? map['name'] ?? '', // Support both keys
+      email: map['email'] ?? '',
       bio: map['bio'] ?? '',
       profilePic: map['profilePic'] ?? '',
-      createdAt: map['createdAt'] != null
-          ? DateTime.parse(map['createdAt'])
-          : DateTime.now(),
+      createdAt: (map['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now(),
     );
   }
 
-  // Convert AppUser to Firestore format
+  // AppUser → Firestore
   Map<String, dynamic> toMap() {
     return {
       'uid': uid,
@@ -37,7 +37,7 @@ class AppUser {
       'email': email,
       'bio': bio,
       'profilePic': profilePic,
-      'createdAt': createdAt.toIso8601String(),
+      'createdAt': Timestamp.fromDate(createdAt),
     };
   }
 }
